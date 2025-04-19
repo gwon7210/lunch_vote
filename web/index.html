@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="lunch_vote">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>lunch_vote</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+    import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCf_lVCA0VCciwARm_Gk_e5MZOm8-rzoW0",
+      authDomain: "lunch-vote-b857d.firebaseapp.com",
+      projectId: "lunch-vote-b857d",
+      storageBucket: "lunch-vote-b857d.firebasestorage.app",
+      messagingSenderId: "335678925888",
+      appId: "1:335678925888:web:13e55350bc6a91be6103a5"
+    };
+
+    try {
+      // Firebase 초기화
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      
+      // Firestore 초기화 (오프라인 지속성 설정)
+      const db = initializeFirestore(app, {
+        cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+        experimentalForceLongPolling: true,
+        experimentalAutoDetectLongPolling: true,
+        useFetchStreams: false // WebChannel 대신 Fetch API 사용
+      });
+
+      // Firestore 연결 상태 모니터링
+      db.onError = (error) => {
+        console.error('Firestore 연결 오류:', error);
+      };
+
+      // 전역 변수로 설정
+      window.firebase = { app, auth, db };
+      console.log('Firebase 초기화 성공');
+
+      // 테스트 쿼리 실행 (타임아웃 설정)
+      const testQuery = db.collection('test').limit(1);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('쿼리 타임아웃')), 5000);
+      });
+
+      Promise.race([
+        testQuery.get(),
+        timeoutPromise
+      ]).then((result) => {
+        console.log('Firestore 연결 테스트 성공');
+      }).catch((error) => {
+        console.error('Firestore 연결 테스트 실패:', error);
+      });
+
+    } catch (error) {
+      console.error('Firebase 초기화 실패:', error);
+    }
+  </script>
+  
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
