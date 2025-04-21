@@ -6,6 +6,7 @@ import 'screens/participation_screen.dart';
 import 'screens/vote_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/not_participating_screen.dart';
+import 'screens/date_selection_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/login',
@@ -32,6 +33,10 @@ final router = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) => const ParticipationScreen(),
+    ),
+    GoRoute(
+      path: '/date-selection',
+      builder: (context, state) => const DateSelectionScreen(),
     ),
     GoRoute(
       path: '/vote',

@@ -79,9 +79,14 @@ class FirestoreService {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
 
+    // 사용자 이름 가져오기
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    final userName = userDoc.data()?['name'] as String? ?? '알 수 없음';
+
     final eventRef = _firestore.collection('events').doc(_currentMonthEventId);
     await eventRef.collection('votes').doc(userId).set({
       'restaurantIds': restaurantIds,
+      'userName': userName,  // 사용자 이름 저장
       'votedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -93,5 +98,108 @@ class FirestoreService {
         .doc(_currentMonthEventId)
         .collection('votes')
         .snapshots();
+  }
+
+  // 선택한 날짜 저장
+  Future<void> setSelectedDates(List<DateTime> dates) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    final eventRef = _firestore.collection('events').doc(_currentMonthEventId);
+    final datesRef = eventRef.collection('dates').doc(userId);
+
+    await datesRef.set({
+      'dates': dates.map((date) => Timestamp.fromDate(date)).toList(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // 선택한 날짜 조회
+  Future<List<DateTime>> getSelectedDates() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return [];
+
+    final doc = await _firestore
+        .collection('events')
+        .doc(_currentMonthEventId)
+        .collection('dates')
+        .doc(userId)
+        .get();
+
+    final timestamps = doc.data()?['dates'] as List<dynamic>? ?? [];
+    return timestamps
+        .map((timestamp) => (timestamp as Timestamp).toDate())
+        .toList();
+  }
+
+  // 날짜별 투표 수 조회
+  Stream<Map<DateTime, int>> getDateVoteCounts() {
+    return _firestore
+        .collection('events')
+        .doc(_currentMonthEventId)
+        .collection('dates')
+        .snapshots()
+        .map((snapshot) {
+      final voteCounts = <DateTime, int>{};
+      
+      for (final doc in snapshot.docs) {
+        final dates = doc.data()['dates'] as List<dynamic>;
+        for (final timestamp in dates) {
+          final date = (timestamp as Timestamp).toDate();
+          voteCounts[date] = (voteCounts[date] ?? 0) + 1;
+        }
+      }
+      
+      return voteCounts;
+    });
+  }
+
+  // 날짜별 투표한 사람들 조회
+  Future<Map<DateTime, List<String>>> getDateVoters() async {
+    final snapshot = await _firestore
+        .collection('events')
+        .doc(_currentMonthEventId)
+        .collection('dates')
+        .get();
+
+    final dateVoters = <DateTime, List<String>>{};
+    
+    for (final doc in snapshot.docs) {
+      final userId = doc.id;
+      final dates = doc.data()['dates'] as List<dynamic>;
+      for (final timestamp in dates) {
+        final date = (timestamp as Timestamp).toDate();
+        dateVoters[date] = [...(dateVoters[date] ?? []), userId];
+      }
+    }
+    
+    return dateVoters;
+  }
+
+  // 식당별 투표한 사람들 조회
+  Future<Map<String, List<String>>> getRestaurantVoters() async {
+    final snapshot = await _firestore
+        .collection('events')
+        .doc(_currentMonthEventId)
+        .collection('votes')
+        .get();
+
+    final restaurantVoters = <String, List<String>>{};
+    
+    for (final doc in snapshot.docs) {
+      final userId = doc.id;
+      final restaurantIds = doc.data()['restaurantIds'] as List<dynamic>;
+      for (final restaurantId in restaurantIds) {
+        restaurantVoters[restaurantId] = [...(restaurantVoters[restaurantId] ?? []), userId];
+      }
+    }
+    
+    return restaurantVoters;
+  }
+
+  // 사용자 이름 조회
+  Future<String> getUserName(String userId) async {
+    final doc = await _firestore.collection('users').doc(userId).get();
+    return doc.data()?['name'] as String? ?? '알 수 없음';
   }
 }

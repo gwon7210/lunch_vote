@@ -45,11 +45,22 @@ class ResultScreen extends StatelessWidget {
           // 투표 결과 집계
           final votes = snapshot.data?.docs ?? [];
           final voteCounts = <String, int>{};
+          final restaurantVoters = <String, Map<String, String>>{}; // userId와 userName을 저장
 
           for (final vote in votes) {
-            final restaurantIds = vote['restaurantIds'] as List<dynamic>;
+            final userId = vote.id;
+            final data = vote.data() as Map<String, dynamic>;
+            if (!data.containsKey('restaurantIds')) continue;
+            
+            final restaurantIds = data['restaurantIds'] as List<dynamic>;
+            final userName = data['userName'] as String? ?? '알 수 없음';
+            
             for (final restaurantId in restaurantIds) {
               voteCounts[restaurantId] = (voteCounts[restaurantId] ?? 0) + 1;
+              restaurantVoters[restaurantId] = {
+                ...(restaurantVoters[restaurantId] ?? {}),
+                userId: userName,
+              };
             }
           }
 
@@ -69,7 +80,7 @@ class ResultScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 16),
                   Text(
-                    '아직 투표 결과가 없습니다.\n투표에 참여해주세요!',
+                    '아직 투표가 진행되지 않았습니다.\n투표 화면으로 이동하여 참여해주세요!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.grey,
@@ -83,7 +94,7 @@ class ResultScreen extends StatelessWidget {
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: sortedResults.length + 1, // 헤더를 위해 +1
+            itemCount: sortedResults.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {
                 // 헤더
@@ -97,7 +108,7 @@ class ResultScreen extends StatelessWidget {
                           const Icon(
                             Icons.workspace_premium,
                             size: 80,
-                            color: Color(0xFFFFD700), // 금색
+                            color: Color(0xFFFFD700),
                           ),
                           Positioned(
                             top: 20,
@@ -123,7 +134,7 @@ class ResultScreen extends StatelessWidget {
                         '${sortedResults[0].value}표',
                         style: const TextStyle(
                           fontSize: 20,
-                          color: Color(0xFFFFD700), // 금색
+                          color: Color(0xFFFFD700),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -135,47 +146,76 @@ class ResultScreen extends StatelessWidget {
               final resultIndex = index - 1;
               final result = sortedResults[resultIndex];
               final rank = resultIndex + 1;
+              final voters = restaurantVoters[result.key] ?? {};
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: rank == 2
-                        ? const Color(0xFFC0C0C0) // 은색
-                        : rank == 3
-                            ? const Color(0xFFCD7F32) // 동색
-                            : Colors.grey[300],
-                    child: Text(
-                      rank.toString(),
-                      style: TextStyle(
-                        color: rank <= 3
-                            ? Theme.of(context).colorScheme.onPrimary
-                            : Colors.grey[600],
-                        fontWeight: FontWeight.bold,
+                child: InkWell(
+                  onLongPress: () {
+                    if (voters.isEmpty) return;
+                    
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('${result.key} 투표자'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: voters.entries
+                              .map((entry) => Text(entry.value))
+                              .toList(),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('닫기'),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  title: Text(
-                    result.key,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${result.value}표',
-                      style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.bold,
+                    );
+                  },
+                  child: Tooltip(
+                    message: '길게 누르면 투표자 목록 보기',
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: rank == 2
+                            ? const Color(0xFFC0C0C0)
+                            : rank == 3
+                                ? const Color(0xFFCD7F32)
+                                : Colors.grey[300],
+                        child: Text(
+                          rank.toString(),
+                          style: TextStyle(
+                            color: rank <= 3
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Colors.grey[600],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        result.key,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${result.value}표',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),

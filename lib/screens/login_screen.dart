@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,10 +19,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // 허용된 이메일 목록
   final List<String> _allowedEmails = [
+    'kseun@youngjin.com',
+    'jisooda@youngjin.com',
+    'parkjonghyun@youngjin.com',
+    'leechan@youngjin.com',
     'parkjiwon@youngjin.com',
-    'parkjiwon1@youngjin.com',
-    'parkjiwon3@youngjin.com',
-    'parkjiwon4@youngjin.com',
+    'ksj@youngjin.com',
   ];
 
   @override
@@ -43,14 +46,21 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      if (!_allowedEmails.contains(email)) {
-        throw '허용되지 않은 사용자입니다';
-      }
-
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // 사용자 정보 Firestore에 저장
+      final userName = email.split('@')[0];  // 이메일에서 @ 앞부분을 사용자 이름으로 사용
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'name': userName,
+        'email': email,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       if (mounted) {
         context.go('/');
@@ -96,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _emailController,
                     decoration: const InputDecoration(
-                      labelText: '이메일',
+                      labelText: '이메일을 입력해주세요',
                       border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.emailAddress,
@@ -111,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _passwordController,
                     decoration: const InputDecoration(
-                      labelText: '비밀번호',
+                      labelText: '비밀번호를 입력해주세요',
                       border: OutlineInputBorder(),
                     ),
                     obscureText: true,
@@ -137,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _isLoading ? null : _login,
                       child: _isLoading
                           ? const CircularProgressIndicator()
-                          : const Text('로그인'),
+                          : const Text('시작하기'),
                     ),
                   ),
                 ],

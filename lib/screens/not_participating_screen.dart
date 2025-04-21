@@ -11,7 +11,7 @@ class NotParticipatingScreen extends StatelessWidget {
     final firestoreService = context.read<FirestoreService>();
     await firestoreService.setParticipation(true);
     if (context.mounted) {
-      context.go('/vote');
+      context.go('/date-selection');
     }
   }
 
@@ -47,7 +47,7 @@ class NotParticipatingScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                '언제든 다시 참여하실 수 있습니다!',
+                '언제든 다시 참여하실 수 있어요!',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
@@ -63,7 +63,7 @@ class NotParticipatingScreen extends StatelessWidget {
                     vertical: 16,
                   ),
                 ),
-                child: const Text('모임 참여하기'),
+                child: const Text('다시 참여하기'),
               ),
             ],
           ),

@@ -48,7 +48,7 @@ class _ParticipationScreenState extends State<ParticipationScreen> {
         });
 
         if (value) {
-          context.go('/vote');
+          context.go('/date-selection');
         } else {
           context.go('/not-participating');
         }
@@ -86,7 +86,7 @@ class _ParticipationScreenState extends State<ParticipationScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    '이번 달 회식에 참여하시겠습니까?',
+                    '이번 달 회식에 참여하실 예정이신가요?',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -104,7 +104,7 @@ class _ParticipationScreenState extends State<ParticipationScreen> {
                             vertical: 16,
                           ),
                         ),
-                        child: const Text('예'),
+                        child: const Text('네, 참여할게요'),
                       ),
                       const SizedBox(width: 16),
                       ElevatedButton(
@@ -115,7 +115,7 @@ class _ParticipationScreenState extends State<ParticipationScreen> {
                             vertical: 16,
                           ),
                         ),
-                        child: const Text('아니오'),
+                        child: const Text('아니요, 다음에 참여할게요'),
                       ),
                     ],
                   ),
