@@ -20,17 +20,7 @@ class NotParticipatingScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('모임 참여'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-          ),
-        ],
+        automaticallyImplyLeading: false,
       ),
       body: Center(
         child: Padding(
@@ -64,6 +54,16 @@ class NotParticipatingScreen extends StatelessWidget {
                   ),
                 ),
                 child: const Text('다시 참여하기'),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                },
+                child: const Text('로그아웃'),
               ),
             ],
           ),

@@ -14,8 +14,15 @@ class DateSelectionScreen extends StatefulWidget {
 class _DateSelectionScreenState extends State<DateSelectionScreen> {
   final Set<DateTime> _selectedDates = {};
   bool _isSubmitting = false;
-  final DateTime _startDate = DateTime(2025, 4, 22);
-  final DateTime _endDate = DateTime(2025, 4, 30);
+
+  final List<DateTime> _selectableDates = [
+    DateTime(DateTime.now().year, 6, 24),
+    DateTime(DateTime.now().year, 6, 25),
+    DateTime(DateTime.now().year, 6, 26),
+    DateTime(DateTime.now().year, 6, 27),
+    DateTime(DateTime.now().year, 6, 30),
+  ];
+
   Map<DateTime, int> _dateVoteCounts = {};
   Map<DateTime, List<String>> _dateVoters = {};
   Map<String, String> _userNames = {};
@@ -67,7 +74,7 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
 
   Future<void> _loadUserName(String userId) async {
     if (_userNames.containsKey(userId)) return;
-    
+
     final firestoreService = context.read<FirestoreService>();
     final userName = await firestoreService.getUserName(userId);
     if (mounted) {
@@ -153,9 +160,9 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
                 crossAxisSpacing: 4,
                 mainAxisSpacing: 4,
               ),
-              itemCount: _endDate.difference(_startDate).inDays + 1,
+              itemCount: _selectableDates.length,
               itemBuilder: (context, index) {
-                final date = _startDate.add(Duration(days: index));
+                final date = _selectableDates[index];
                 final isSelected = _selectedDates.contains(date);
                 final voteCount = _dateVoteCounts[date] ?? 0;
 
@@ -176,7 +183,9 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? Theme.of(context).primaryColor.withOpacity(0.1 + (voteCount * 0.1))
+                              ? Theme.of(context)
+                                  .primaryColor
+                                  .withOpacity(0.1 + (voteCount * 0.1))
                               : Colors.white,
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
@@ -268,4 +277,4 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
       ),
     );
   }
-} 
+}

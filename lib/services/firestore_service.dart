@@ -86,7 +86,7 @@ class FirestoreService {
     final eventRef = _firestore.collection('events').doc(_currentMonthEventId);
     await eventRef.collection('votes').doc(userId).set({
       'restaurantIds': restaurantIds,
-      'userName': userName,  // 사용자 이름 저장
+      'userName': userName, // 사용자 이름 저장
       'votedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -141,7 +141,7 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
       final voteCounts = <DateTime, int>{};
-      
+
       for (final doc in snapshot.docs) {
         final dates = doc.data()['dates'] as List<dynamic>;
         for (final timestamp in dates) {
@@ -149,7 +149,7 @@ class FirestoreService {
           voteCounts[date] = (voteCounts[date] ?? 0) + 1;
         }
       }
-      
+
       return voteCounts;
     });
   }
@@ -163,7 +163,7 @@ class FirestoreService {
         .get();
 
     final dateVoters = <DateTime, List<String>>{};
-    
+
     for (final doc in snapshot.docs) {
       final userId = doc.id;
       final dates = doc.data()['dates'] as List<dynamic>;
@@ -172,7 +172,7 @@ class FirestoreService {
         dateVoters[date] = [...(dateVoters[date] ?? []), userId];
       }
     }
-    
+
     return dateVoters;
   }
 
@@ -185,15 +185,18 @@ class FirestoreService {
         .get();
 
     final restaurantVoters = <String, List<String>>{};
-    
+
     for (final doc in snapshot.docs) {
       final userId = doc.id;
       final restaurantIds = doc.data()['restaurantIds'] as List<dynamic>;
       for (final restaurantId in restaurantIds) {
-        restaurantVoters[restaurantId] = [...(restaurantVoters[restaurantId] ?? []), userId];
+        restaurantVoters[restaurantId] = [
+          ...(restaurantVoters[restaurantId] ?? []),
+          userId
+        ];
       }
     }
-    
+
     return restaurantVoters;
   }
 
@@ -201,5 +204,39 @@ class FirestoreService {
   Future<String> getUserName(String userId) async {
     final doc = await _firestore.collection('users').doc(userId).get();
     return doc.data()?['name'] as String? ?? '알 수 없음';
+  }
+
+  // 모든 사용자 정보 스트림
+  Stream<QuerySnapshot> getAllUsersStream() {
+    return _firestore.collection('users').snapshots();
+  }
+
+  // 현재 월의 참여 정보 스트림
+  Stream<QuerySnapshot> getParticipationStream() {
+    return _firestore
+        .collection('events')
+        .doc(_currentMonthEventId)
+        .collection('participants')
+        .snapshots();
+  }
+
+  // 불참 사유 저장
+  Future<void> setNonParticipationReason(String reason,
+      {String? customReason}) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    final eventRef = _firestore.collection('events').doc(_currentMonthEventId);
+    final participantsRef = eventRef.collection('participants').doc(userId);
+
+    final dataToUpdate = <String, dynamic>{
+      'nonParticipationReason': reason,
+    };
+
+    if (customReason != null) {
+      dataToUpdate['nonParticipationReasonCustom'] = customReason;
+    }
+
+    await participantsRef.update(dataToUpdate);
   }
 }

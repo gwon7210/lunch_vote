@@ -50,7 +50,7 @@ class _ParticipationScreenState extends State<ParticipationScreen> {
         if (value) {
           context.go('/date-selection');
         } else {
-          context.go('/not-participating');
+          context.go('/non-participation-reason');
         }
       }
     } finally {
@@ -68,6 +68,11 @@ class _ParticipationScreenState extends State<ParticipationScreen> {
       appBar: AppBar(
         title: const Text('회식 참여 여부'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.dashboard_customize_outlined),
+            tooltip: '관리자 대시보드',
+            onPressed: () => context.go('/admin-dashboard'),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {

@@ -9,25 +9,13 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -41,11 +29,47 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCf_lVCA0VCciwARm_Gk_e5MZOm8-rzoW0',
-    authDomain: 'lunch-vote-b857d.firebaseapp.com',
-    projectId: 'lunch-vote-b857d',
-    storageBucket: 'lunch-vote-b857d.firebasestorage.app',
-    messagingSenderId: '335678925888',
-    appId: '1:335678925888:web:13e55350bc6a91be6103a5',
+    apiKey: 'AIzaSyDVcHjg-hmDpyMkhZUtRCUzdLlfRM7PTFk',
+    appId: '1:11013988788:web:855a860e4d6e7bcb6752e1',
+    messagingSenderId: '11013988788',
+    projectId: 'lunchvote-dbce0',
+    authDomain: 'lunchvote-dbce0.firebaseapp.com',
+    storageBucket: 'lunchvote-dbce0.firebasestorage.app',
   );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyAnynrEPOQwqT94MgzSkEVseU4mVPqvbBc',
+    appId: '1:11013988788:ios:8c3d0c0e5be232c26752e1',
+    messagingSenderId: '11013988788',
+    projectId: 'lunchvote-dbce0',
+    storageBucket: 'lunchvote-dbce0.firebasestorage.app',
+    iosBundleId: 'com.example.lunchVote',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyAnynrEPOQwqT94MgzSkEVseU4mVPqvbBc',
+    appId: '1:11013988788:ios:8c3d0c0e5be232c26752e1',
+    messagingSenderId: '11013988788',
+    projectId: 'lunchvote-dbce0',
+    storageBucket: 'lunchvote-dbce0.firebasestorage.app',
+    iosBundleId: 'com.example.lunchVote',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyAqXHtMMfpj-lQU0diF8W4voKeesYAkO1Q',
+    appId: '1:11013988788:android:8e1227239f2f847e6752e1',
+    messagingSenderId: '11013988788',
+    projectId: 'lunchvote-dbce0',
+    storageBucket: 'lunchvote-dbce0.firebasestorage.app',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyDVcHjg-hmDpyMkhZUtRCUzdLlfRM7PTFk',
+    appId: '1:11013988788:web:6c6becedd26b64476752e1',
+    messagingSenderId: '11013988788',
+    projectId: 'lunchvote-dbce0',
+    authDomain: 'lunchvote-dbce0.firebaseapp.com',
+    storageBucket: 'lunchvote-dbce0.firebasestorage.app',
+  );
+
 }

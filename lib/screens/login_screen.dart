@@ -46,13 +46,14 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       // 사용자 정보 Firestore에 저장
-      final userName = email.split('@')[0];  // 이메일에서 @ 앞부분을 사용자 이름으로 사용
+      final userName = email.split('@')[0]; // 이메일에서 @ 앞부분을 사용자 이름으로 사용
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
@@ -95,6 +96,26 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: Image.asset(
+                      'assets/images/lunch_illustration.png',
+                      width: 250,
+                      height: 150,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const SizedBox(
+                          width: 250,
+                          height: 150,
+                          child: Center(
+                            child: Text(
+                                '이미지를 불러올 수 없습니다.\nassets/images/lunch_illustration.png 경로를 확인해주세요.'),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   const Text(
                     '회식 투표 앱',
                     style: TextStyle(

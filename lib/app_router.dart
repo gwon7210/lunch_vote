@@ -7,6 +7,8 @@ import 'screens/vote_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/not_participating_screen.dart';
 import 'screens/date_selection_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
+import 'screens/non_participation_reason_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/login',
@@ -49,6 +51,14 @@ final router = GoRouter(
     GoRoute(
       path: '/not-participating',
       builder: (context, state) => const NotParticipatingScreen(),
+    ),
+    GoRoute(
+      path: '/admin-dashboard',
+      builder: (context, state) => const AdminDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/non-participation-reason',
+      builder: (context, state) => const NonParticipationReasonScreen(),
     ),
   ],
 );
