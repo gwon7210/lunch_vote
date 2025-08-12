@@ -26,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     'leechan@youngjin.com',
     'parkjiwon@youngjin.com',
     'ksj@youngjin.com',
+    'daeho0914@youngjin.com'
   ];
 
   @override
