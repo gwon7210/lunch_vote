@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../widgets/countdown_timer.dart';
 
 class ParticipationScreen extends StatefulWidget {
   const ParticipationScreen({super.key});
@@ -68,6 +69,8 @@ class _ParticipationScreenState extends State<ParticipationScreen> {
       appBar: AppBar(
         title: const Text('회식 참여 여부'),
         actions: [
+          const CountdownTimer(),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.dashboard_customize_outlined),
             tooltip: '관리자 대시보드',

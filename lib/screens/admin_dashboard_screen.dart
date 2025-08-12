@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
+import '../widgets/countdown_timer.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -32,6 +33,10 @@ class AdminDashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('참여 현황 대시보드'),
+        actions: [
+          const CountdownTimer(),
+          const SizedBox(width: 16),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: firestoreService.getAllUsersStream(),

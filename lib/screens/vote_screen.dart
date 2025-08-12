@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/firestore_service.dart';
+import '../widgets/countdown_timer.dart';
 
 class RestaurantCard extends StatelessWidget {
   final String restaurantName;
@@ -200,6 +201,8 @@ class _VoteScreenState extends State<VoteScreen> {
       appBar: AppBar(
         title: const Text('식당 투표'),
         actions: [
+          const CountdownTimer(),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: () {

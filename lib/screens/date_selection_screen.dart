@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../widgets/countdown_timer.dart';
 
 class DateSelectionScreen extends StatefulWidget {
   const DateSelectionScreen({super.key});
@@ -16,11 +17,16 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
   bool _isSubmitting = false;
 
   final List<DateTime> _selectableDates = [
-    DateTime(DateTime.now().year, 6, 24),
-    DateTime(DateTime.now().year, 6, 25),
-    DateTime(DateTime.now().year, 6, 26),
-    DateTime(DateTime.now().year, 6, 27),
-    DateTime(DateTime.now().year, 6, 30),
+    DateTime(DateTime.now().year, 8, 18),
+    DateTime(DateTime.now().year, 8, 19),
+    DateTime(DateTime.now().year, 8, 20),
+    DateTime(DateTime.now().year, 8, 21),
+    DateTime(DateTime.now().year, 8, 22),
+    DateTime(DateTime.now().year, 8, 25),
+    DateTime(DateTime.now().year, 8, 26),
+    DateTime(DateTime.now().year, 8, 27),
+    DateTime(DateTime.now().year, 8, 28),
+    DateTime(DateTime.now().year, 8, 29),
   ];
 
   Map<DateTime, Map<String, int>> _dateMealVoteCounts = {};
@@ -162,6 +168,8 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
       appBar: AppBar(
         title: const Text('날짜 선택'),
         actions: [
+          const CountdownTimer(),
+          const SizedBox(width: 8),
           // 관리자 대시보드 아이콘
           if (context.read<FirestoreService>().isAdmin())
             IconButton(
@@ -216,7 +224,7 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
                 const SizedBox(width: 8),
                 // 지원 금액 정보 툴팁
                 Tooltip(
-                  message: '점심 15,000원,\n 저녁 50,000원 지원!',
+                  message: '점심 15,000원,\n저녁 50,000원 지원!',
                   decoration: BoxDecoration(
                     color: Colors.black87,
                     borderRadius: BorderRadius.circular(8),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
+import '../widgets/countdown_timer.dart';
 
 class NonParticipationReasonScreen extends StatefulWidget {
   const NonParticipationReasonScreen({super.key});
@@ -69,6 +70,8 @@ class _NonParticipationReasonScreenState
         title: const Text('불참 사유 선택'),
         automaticallyImplyLeading: false, // 뒤로가기 버튼 숨김
         actions: [
+          const CountdownTimer(),
+          const SizedBox(width: 8),
           // 관리자 대시보드 아이콘
           if (context.read<FirestoreService>().isAdmin())
             IconButton(

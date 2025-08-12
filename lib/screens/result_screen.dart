@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../widgets/countdown_timer.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key});
@@ -18,6 +19,8 @@ class ResultScreen extends StatelessWidget {
           onPressed: () => context.go('/vote'),
         ),
         actions: [
+          const CountdownTimer(),
+          const SizedBox(width: 8),
           // 관리자 대시보드 아이콘
           if (context.read<FirestoreService>().isAdmin())
             IconButton(

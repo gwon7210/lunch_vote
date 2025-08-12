@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../widgets/countdown_timer.dart';
 
 class NotParticipatingScreen extends StatelessWidget {
   const NotParticipatingScreen({super.key});
@@ -22,6 +23,8 @@ class NotParticipatingScreen extends StatelessWidget {
         title: const Text('모임 참여'),
         automaticallyImplyLeading: false,
         actions: [
+          const CountdownTimer(),
+          const SizedBox(width: 8),
           // 관리자 대시보드 아이콘
           if (context.read<FirestoreService>().isAdmin())
             IconButton(
