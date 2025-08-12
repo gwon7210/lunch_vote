@@ -207,6 +207,13 @@ class _VoteScreenState extends State<VoteScreen> {
             },
             tooltip: '날짜 선택으로 돌아가기',
           ),
+          // 관리자 대시보드 아이콘
+          if (context.read<FirestoreService>().isAdmin())
+            IconButton(
+              icon: const Icon(Icons.dashboard_customize_outlined),
+              tooltip: '관리자 대시보드',
+              onPressed: () => context.go('/admin-dashboard'),
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {

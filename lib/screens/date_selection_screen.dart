@@ -12,7 +12,7 @@ class DateSelectionScreen extends StatefulWidget {
 }
 
 class _DateSelectionScreenState extends State<DateSelectionScreen> {
-  final Set<DateTime> _selectedDates = {};
+  final Map<DateTime, Set<String>> _selectedDateMeals = {};
   bool _isSubmitting = false;
 
   final List<DateTime> _selectableDates = [
@@ -23,50 +23,52 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
     DateTime(DateTime.now().year, 6, 30),
   ];
 
-  Map<DateTime, int> _dateVoteCounts = {};
-  Map<DateTime, List<String>> _dateVoters = {};
+  Map<DateTime, Map<String, int>> _dateMealVoteCounts = {};
+  Map<DateTime, Map<String, List<String>>> _dateMealVoters = {};
   Map<String, String> _userNames = {};
 
   @override
   void initState() {
     super.initState();
     _loadSelectedDates();
-    _loadDateVoteCounts();
-    _loadDateVoters();
+    _loadDateMealVoteCounts();
+    _loadDateMealVoters();
   }
 
   Future<void> _loadSelectedDates() async {
     final firestoreService = context.read<FirestoreService>();
-    final dates = await firestoreService.getSelectedDates();
+    final dateMeals = await firestoreService.getSelectedDates();
     if (mounted) {
       setState(() {
-        _selectedDates.addAll(dates);
+        _selectedDateMeals.addAll(dateMeals);
       });
     }
   }
 
-  void _loadDateVoteCounts() {
+  void _loadDateMealVoteCounts() {
     final firestoreService = context.read<FirestoreService>();
-    firestoreService.getDateVoteCounts().listen((voteCounts) {
+    firestoreService.getDateMealVoteCounts().listen((voteCounts) {
       if (mounted) {
         setState(() {
-          _dateVoteCounts = Map<DateTime, int>.from(voteCounts);
+          _dateMealVoteCounts = Map<DateTime, Map<String, int>>.from(voteCounts);
         });
       }
     });
   }
 
-  Future<void> _loadDateVoters() async {
+  Future<void> _loadDateMealVoters() async {
     final firestoreService = context.read<FirestoreService>();
-    final dateVoters = await firestoreService.getDateVoters();
+    final dateMealVoters = await firestoreService.getDateMealVoters();
     if (mounted) {
       setState(() {
-        _dateVoters = dateVoters;
+        _dateMealVoters = dateMealVoters;
       });
       // 모든 사용자 이름 미리 로드
-      for (final voters in dateVoters.values) {
-        for (final userId in voters) {
-          _loadUserName(userId);
+      for (final mealVoters in dateMealVoters.values) {
+        for (final voters in mealVoters.values) {
+          for (final userId in voters) {
+            _loadUserName(userId);
+          }
         }
       }
     }
@@ -84,14 +86,19 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
     }
   }
 
-  void _showVotersDialog(DateTime date) {
-    final voters = _dateVoters[date] ?? [];
+  void _showVotersDialog(DateTime date, String meal) {
+    final mealVoters = _dateMealVoters[date];
+    if (mealVoters == null) return;
+    
+    final voters = mealVoters[meal] ?? [];
     if (voters.isEmpty) return;
+
+    final mealText = meal == 'lunch' ? '점심' : '저녁';
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${date.month}월 ${date.day}일 투표자'),
+        title: Text('${date.month}월 ${date.day}일 ${mealText} 투표자'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,8 +116,25 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
     );
   }
 
+  void _toggleMeal(DateTime date, String meal) {
+    setState(() {
+      if (!_selectedDateMeals.containsKey(date)) {
+        _selectedDateMeals[date] = <String>{};
+      }
+      
+      if (_selectedDateMeals[date]!.contains(meal)) {
+        _selectedDateMeals[date]!.remove(meal);
+        if (_selectedDateMeals[date]!.isEmpty) {
+          _selectedDateMeals.remove(date);
+        }
+      } else {
+        _selectedDateMeals[date]!.add(meal);
+      }
+    });
+  }
+
   Future<void> _submitDates() async {
-    if (_selectedDates.isEmpty) return;
+    if (_selectedDateMeals.isEmpty) return;
 
     setState(() {
       _isSubmitting = true;
@@ -118,7 +142,7 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
 
     try {
       final firestoreService = context.read<FirestoreService>();
-      await firestoreService.setSelectedDates(_selectedDates.toList());
+      await firestoreService.setSelectedDates(_selectedDateMeals);
 
       if (mounted) {
         context.go('/vote');
@@ -138,6 +162,13 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
       appBar: AppBar(
         title: const Text('날짜 선택'),
         actions: [
+          // 관리자 대시보드 아이콘
+          if (context.read<FirestoreService>().isAdmin())
+            IconButton(
+              icon: const Icon(Icons.dashboard_customize_outlined),
+              tooltip: '관리자 대시보드',
+              onPressed: () => context.go('/admin-dashboard'),
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -151,6 +182,76 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
       ),
       body: Column(
         children: [
+          // 안내 메시지 추가
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Theme.of(context).primaryColor.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Theme.of(context).primaryColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    '최대한 가능한 날짜를 여러개 선택해주세요!',
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 지원 금액 정보 툴팁
+                Tooltip(
+                  message: '점심 15,000원,\n 저녁 50,000원 지원!',
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.orange.shade300,
+                        width: 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '?',
+                        style: TextStyle(
+                          color: Colors.orange.shade700,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
@@ -163,64 +264,137 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
               itemCount: _selectableDates.length,
               itemBuilder: (context, index) {
                 final date = _selectableDates[index];
-                final isSelected = _selectedDates.contains(date);
-                final voteCount = _dateVoteCounts[date] ?? 0;
+                final selectedMeals = _selectedDateMeals[date] ?? <String>{};
+                final isLunchSelected = selectedMeals.contains('lunch');
+                final isDinnerSelected = selectedMeals.contains('dinner');
+                final voteCounts = _dateMealVoteCounts[date] ?? {'lunch': 0, 'dinner': 0};
 
                 return RepaintBoundary(
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedDates.remove(date);
-                        } else {
-                          _selectedDates.add(date);
-                        }
-                      });
-                    },
-                    onLongPress: () => _showVotersDialog(date),
-                    child: Tooltip(
-                      message: '길게 누르면 투표자 목록 보기',
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Theme.of(context)
-                                  .primaryColor
-                                  .withOpacity(0.1 + (voteCount * 0.1))
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: isSelected
-                                ? Theme.of(context).primaryColor
-                                : Colors.grey.shade300,
-                            width: 1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: (isLunchSelected || isDinnerSelected)
+                          ? Theme.of(context)
+                              .primaryColor
+                              .withOpacity(0.1 + ((voteCounts['lunch']! + voteCounts['dinner']!) * 0.05))
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: (isLunchSelected || isDinnerSelected)
+                            ? Theme.of(context).primaryColor
+                            : Colors.grey.shade300,
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // 날짜 표시
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
+                            ),
+                          ),
+                          child: Text(
+                            '${date.month}월 ${date.day}일',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              '${date.month}월 ${date.day}일',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected
-                                    ? Theme.of(context).primaryColor
-                                    : Colors.black,
+                        
+                        // 점심 선택 영역
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _toggleMeal(date, 'lunch'),
+                            onLongPress: () => _showVotersDialog(date, 'lunch'),
+                            child: Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: isLunchSelected
+                                    ? Theme.of(context).primaryColor.withOpacity(0.3)
+                                    : Colors.transparent,
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade300,
+                                    width: 0.5,
+                                  ),
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    isLunchSelected ? Icons.check_circle : Icons.circle_outlined,
+                                    color: isLunchSelected
+                                        ? Theme.of(context).primaryColor
+                                        : Colors.grey,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    '점심',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${voteCounts['lunch']}명',
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${voteCount}명',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: isSelected
-                                    ? Theme.of(context).primaryColor
-                                    : Colors.grey,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                        
+                        // 저녁 선택 영역
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _toggleMeal(date, 'dinner'),
+                            onLongPress: () => _showVotersDialog(date, 'dinner'),
+                            child: Container(
+                              width: double.infinity,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    isDinnerSelected ? Icons.check_circle : Icons.circle_outlined,
+                                    color: isDinnerSelected
+                                        ? Theme.of(context).primaryColor
+                                        : Colors.grey,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    '저녁',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${voteCounts['dinner']}명',
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -244,7 +418,7 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '선택된 날짜: ${_selectedDates.length}개',
+                    '선택된 날짜: ${_selectedDateMeals.length}개',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                     ),
@@ -253,7 +427,7 @@ class _DateSelectionScreenState extends State<DateSelectionScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: _isSubmitting || _selectedDates.isEmpty
+                      onPressed: _isSubmitting || _selectedDateMeals.isEmpty
                           ? null
                           : _submitDates,
                       icon: const Icon(Icons.check),

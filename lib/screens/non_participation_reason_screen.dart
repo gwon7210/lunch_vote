@@ -68,6 +68,15 @@ class _NonParticipationReasonScreenState
       appBar: AppBar(
         title: const Text('불참 사유 선택'),
         automaticallyImplyLeading: false, // 뒤로가기 버튼 숨김
+        actions: [
+          // 관리자 대시보드 아이콘
+          if (context.read<FirestoreService>().isAdmin())
+            IconButton(
+              icon: const Icon(Icons.dashboard_customize_outlined),
+              tooltip: '관리자 대시보드',
+              onPressed: () => context.go('/admin-dashboard'),
+            ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

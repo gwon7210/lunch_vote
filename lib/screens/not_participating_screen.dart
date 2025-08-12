@@ -21,6 +21,15 @@ class NotParticipatingScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('모임 참여'),
         automaticallyImplyLeading: false,
+        actions: [
+          // 관리자 대시보드 아이콘
+          if (context.read<FirestoreService>().isAdmin())
+            IconButton(
+              icon: const Icon(Icons.dashboard_customize_outlined),
+              tooltip: '관리자 대시보드',
+              onPressed: () => context.go('/admin-dashboard'),
+            ),
+        ],
       ),
       body: Center(
         child: Padding(

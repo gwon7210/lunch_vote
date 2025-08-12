@@ -19,6 +19,23 @@ class FirestoreService {
     return '${now.year}-${now.month.toString().padLeft(2, '0')}';
   }
 
+  // 관리자 권한 확인
+  bool isAdmin() {
+    final user = _auth.currentUser;
+    if (user?.email == null) return false;
+    
+    final adminEmails = [
+      'kseun@youngjin.com',
+      'jisooda@youngjin.com',
+      'parkjonghyun@youngjin.com',
+      'leechan@youngjin.com',
+      'parkjiwon@youngjin.com',
+      'ksj@youngjin.com',
+    ];
+    
+    return adminEmails.contains(user!.email);
+  }
+
   // 참여 여부 저장
   Future<void> setParticipation(bool isParticipating) async {
     final userId = _auth.currentUser?.uid;
@@ -100,24 +117,31 @@ class FirestoreService {
         .snapshots();
   }
 
-  // 선택한 날짜 저장
-  Future<void> setSelectedDates(List<DateTime> dates) async {
+  // 선택한 날짜 저장 (점심/저녁 구분)
+  Future<void> setSelectedDates(Map<DateTime, Set<String>> dateMeals) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
 
     final eventRef = _firestore.collection('events').doc(_currentMonthEventId);
     final datesRef = eventRef.collection('dates').doc(userId);
 
+    // 날짜별로 점심/저녁 정보를 저장
+    final datesData = <String, List<String>>{};
+    for (final entry in dateMeals.entries) {
+      final dateKey = '${entry.key.year}-${entry.key.month.toString().padLeft(2, '0')}-${entry.key.day.toString().padLeft(2, '0')}';
+      datesData[dateKey] = entry.value.toList();
+    }
+
     await datesRef.set({
-      'dates': dates.map((date) => Timestamp.fromDate(date)).toList(),
+      'dateMeals': datesData,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
-  // 선택한 날짜 조회
-  Future<List<DateTime>> getSelectedDates() async {
+  // 선택한 날짜 조회 (점심/저녁 구분)
+  Future<Map<DateTime, Set<String>>> getSelectedDates() async {
     final userId = _auth.currentUser?.uid;
-    if (userId == null) return [];
+    if (userId == null) return {};
 
     final doc = await _firestore
         .collection('events')
@@ -126,27 +150,55 @@ class FirestoreService {
         .doc(userId)
         .get();
 
-    final timestamps = doc.data()?['dates'] as List<dynamic>? ?? [];
-    return timestamps
-        .map((timestamp) => (timestamp as Timestamp).toDate())
-        .toList();
+    final dateMealsData = doc.data()?['dateMeals'] as Map<String, dynamic>? ?? {};
+    final result = <DateTime, Set<String>>{};
+
+    for (final entry in dateMealsData.entries) {
+      final dateParts = entry.key.split('-');
+      final date = DateTime(
+        int.parse(dateParts[0]),
+        int.parse(dateParts[1]),
+        int.parse(dateParts[2]),
+      );
+      final meals = (entry.value as List<dynamic>).cast<String>().toSet();
+      result[date] = meals;
+    }
+
+    return result;
   }
 
-  // 날짜별 투표 수 조회
-  Stream<Map<DateTime, int>> getDateVoteCounts() {
+  // 날짜별 점심/저녁 투표 수 조회
+  Stream<Map<DateTime, Map<String, int>>> getDateMealVoteCounts() {
     return _firestore
         .collection('events')
         .doc(_currentMonthEventId)
         .collection('dates')
         .snapshots()
         .map((snapshot) {
-      final voteCounts = <DateTime, int>{};
+      final voteCounts = <DateTime, Map<String, int>>{};
 
       for (final doc in snapshot.docs) {
-        final dates = doc.data()['dates'] as List<dynamic>;
-        for (final timestamp in dates) {
-          final date = (timestamp as Timestamp).toDate();
-          voteCounts[date] = (voteCounts[date] ?? 0) + 1;
+        final dateMealsData = doc.data()['dateMeals'] as Map<String, dynamic>? ?? {};
+        
+        for (final entry in dateMealsData.entries) {
+          final dateParts = entry.key.split('-');
+          final date = DateTime(
+            int.parse(dateParts[0]),
+            int.parse(dateParts[1]),
+            int.parse(dateParts[2]),
+          );
+          
+          final meals = (entry.value as List<dynamic>).cast<String>();
+          
+          if (!voteCounts.containsKey(date)) {
+            voteCounts[date] = {'lunch': 0, 'dinner': 0};
+          }
+          
+          for (final meal in meals) {
+            if (voteCounts[date]!.containsKey(meal)) {
+              voteCounts[date]![meal] = (voteCounts[date]![meal] ?? 0) + 1;
+            }
+          }
         }
       }
 
@@ -154,26 +206,43 @@ class FirestoreService {
     });
   }
 
-  // 날짜별 투표한 사람들 조회
-  Future<Map<DateTime, List<String>>> getDateVoters() async {
+  // 날짜별 점심/저녁 투표한 사람들 조회
+  Future<Map<DateTime, Map<String, List<String>>>> getDateMealVoters() async {
     final snapshot = await _firestore
         .collection('events')
         .doc(_currentMonthEventId)
         .collection('dates')
         .get();
 
-    final dateVoters = <DateTime, List<String>>{};
+    final dateMealVoters = <DateTime, Map<String, List<String>>>{};
 
     for (final doc in snapshot.docs) {
       final userId = doc.id;
-      final dates = doc.data()['dates'] as List<dynamic>;
-      for (final timestamp in dates) {
-        final date = (timestamp as Timestamp).toDate();
-        dateVoters[date] = [...(dateVoters[date] ?? []), userId];
+      final dateMealsData = doc.data()['dateMeals'] as Map<String, dynamic>? ?? {};
+      
+      for (final entry in dateMealsData.entries) {
+        final dateParts = entry.key.split('-');
+        final date = DateTime(
+          int.parse(dateParts[0]),
+          int.parse(dateParts[1]),
+          int.parse(dateParts[2]),
+        );
+        
+        final meals = (entry.value as List<dynamic>).cast<String>();
+        
+        if (!dateMealVoters.containsKey(date)) {
+          dateMealVoters[date] = {'lunch': [], 'dinner': []};
+        }
+        
+        for (final meal in meals) {
+          if (dateMealVoters[date]!.containsKey(meal)) {
+            dateMealVoters[date]![meal] = [...dateMealVoters[date]![meal]!, userId];
+          }
+        }
       }
     }
 
-    return dateVoters;
+    return dateMealVoters;
   }
 
   // 식당별 투표한 사람들 조회
@@ -238,5 +307,32 @@ class FirestoreService {
     }
 
     await participantsRef.update(dataToUpdate);
+  }
+
+  // 날짜별 투표 수 조회 (기존 호환성)
+  Stream<Map<DateTime, int>> getDateVoteCounts() {
+    return getDateMealVoteCounts().map((dateMealCounts) {
+      final voteCounts = <DateTime, int>{};
+      for (final entry in dateMealCounts.entries) {
+        voteCounts[entry.key] = (entry.value['lunch'] ?? 0) + (entry.value['dinner'] ?? 0);
+      }
+      return voteCounts;
+    });
+  }
+
+  // 날짜별 투표한 사람들 조회 (기존 호환성)
+  Future<Map<DateTime, List<String>>> getDateVoters() async {
+    final dateMealVoters = await getDateMealVoters();
+    final dateVoters = <DateTime, List<String>>{};
+    
+    for (final entry in dateMealVoters.entries) {
+      final allVoters = <String>{};
+      for (final mealVoters in entry.value.values) {
+        allVoters.addAll(mealVoters);
+      }
+      dateVoters[entry.key] = allVoters.toList();
+    }
+    
+    return dateVoters;
   }
 }

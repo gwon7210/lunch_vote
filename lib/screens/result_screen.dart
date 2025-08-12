@@ -18,6 +18,13 @@ class ResultScreen extends StatelessWidget {
           onPressed: () => context.go('/vote'),
         ),
         actions: [
+          // 관리자 대시보드 아이콘
+          if (context.read<FirestoreService>().isAdmin())
+            IconButton(
+              icon: const Icon(Icons.dashboard_customize_outlined),
+              tooltip: '관리자 대시보드',
+              onPressed: () => context.go('/admin-dashboard'),
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
