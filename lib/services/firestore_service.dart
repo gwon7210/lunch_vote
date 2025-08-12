@@ -31,6 +31,7 @@ class FirestoreService {
       'leechan@youngjin.com',
       'parkjiwon@youngjin.com',
       'ksj@youngjin.com',
+      'daeho0914@youngjin.com'
     ];
     
     return adminEmails.contains(user!.email);

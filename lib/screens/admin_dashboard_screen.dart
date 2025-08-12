@@ -15,6 +15,7 @@ class AdminDashboardScreen extends StatelessWidget {
     'leechan@youngjin.com',
     'parkjiwon@youngjin.com',
     'ksj@youngjin.com',
+    'daeho0914@youngjin.com'
   ];
 
   final Map<String, String> _reasonKeyToDisplay = const {
